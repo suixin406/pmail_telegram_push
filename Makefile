@@ -1,6 +1,7 @@
 .PHONY: build
 
 build:
+	pnpm build
 	go build -o pmail_telegram_push -ldflags "-s -w"
 
 install:

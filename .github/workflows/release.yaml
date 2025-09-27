@@ -1,6 +1,6 @@
 name: Release Binary
 
-on: 
+on:
   push:
     tags:
       - 'v*'
@@ -9,8 +9,8 @@ jobs:
   build:
     strategy:
       matrix:
-        goos: [ 'linux', 'darwin', 'windows' ]
-        goarch: [ 'amd64', 'arm64' ]
+        goos: ['linux', 'darwin', 'windows']
+        goarch: ['amd64', 'arm64']
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -19,12 +19,23 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: '>=1.25'
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: '10'
+          run_install: true
+          standalone: true
       - name: Download dependencies
         run: |
           go mod tidy
           go mod download
       - name: Build binary
         run: |
+          pnpm build
           if [[ "${{ matrix.goos }}" = "windows" ]]; then
             go build -o pmail_telegram_push_${{ matrix.goos }}_${{ matrix.goarch }}.exe -ldflags="-s -w"
           else
@@ -38,7 +49,7 @@ jobs:
         with:
           allowUpdates: true
           artifactErrorsFailBuild: true
-          artifacts: "pmail_telegram_push_${{ matrix.goos }}_${{ matrix.goarch }}*"
+          artifacts: 'pmail_telegram_push_${{ matrix.goos }}_${{ matrix.goarch }}*'
           commit: ${{ github.sha }}
           draft: false
           prerelease: false

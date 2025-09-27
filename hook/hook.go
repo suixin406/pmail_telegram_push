@@ -19,7 +19,7 @@ const (
 )
 
 var (
-	//go:embed setting.html
+	//go:embed dist/index.html
 	SettingHtml string
 )
 
