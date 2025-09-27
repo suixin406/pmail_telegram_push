@@ -43,31 +43,31 @@ func removeHTMLTags(text string) string {
 
 func (h *PmailTelegramPushHook) getText(email *parsemail.Email) (text string) {
 	text = "📧 有新邮件\n"
-	text += fmt.Sprintf("主题：<b>%s</b>\n", email.Subject)
-	text += fmt.Sprintf("发件：&#60;%s&#62;\n", email.From.EmailAddress)
+	text += fmt.Sprintf("🔖 主题：<b>%s</b>\n", email.Subject)
+	text += fmt.Sprintf("📤 发件：&#60;%s&#62;\n", email.From.EmailAddress)
 	if len(email.To) > 0 {
-		text += "收件："
+		text += "📥 收件："
 		for _, to := range email.To {
 			text += fmt.Sprintf("&#60;%s&#62; ", to.EmailAddress)
 		}
 		text += "\n"
 	}
 	if len(email.Cc) > 0 {
-		text += "抄送："
+		text += "📋 抄送："
 		for _, cc := range email.Cc {
 			text += fmt.Sprintf("&#60;%s&#62; ", cc.EmailAddress)
 		}
 		text += "\n"
 	}
 	if len(email.Bcc) > 0 {
-		text += "密送："
+		text += "🕵️ 密送："
 		for _, bcc := range email.Bcc {
 			text += fmt.Sprintf("&#60;%s&#62; ", bcc.EmailAddress)
 		}
 		text += "\n"
 	}
 	if len(email.Attachments) > 0 {
-		text += fmt.Sprintf("附件：%d 个\n", len(email.Attachments))
+		text += fmt.Sprintf("📎 附件：%d 个\n", len(email.Attachments))
 	}
 
 	if h.showContent {
@@ -84,7 +84,6 @@ func (h *PmailTelegramPushHook) getText(email *parsemail.Email) (text string) {
 			} else {
 				emailContent = string(email.Text)
 			}
-
 		} else if len(email.HTML) > 0 {
 			if len(email.HTML) > size {
 				emailContent = fmt.Sprintf("%s...", removeHTMLTags(string(email.HTML))[:size])
@@ -96,7 +95,7 @@ func (h *PmailTelegramPushHook) getText(email *parsemail.Email) (text string) {
 			emailContent = fmt.Sprintf("<tg-spoiler>%s</tg-spoiler>", emailContent)
 		}
 		if len(emailContent) > 0 {
-			text += fmt.Sprintf("内容：\n%s\n", emailContent)
+			text += fmt.Sprintf("%s\n", emailContent)
 		}
 	}
 
@@ -106,32 +105,37 @@ func (h *PmailTelegramPushHook) getText(email *parsemail.Email) (text string) {
 func (h *PmailTelegramPushHook) sendNotification(email *parsemail.Email) (msg *models.Message, err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), h.timeout)
 	defer cancel()
-	return h.bot.SendMessage(ctx, &bot.SendMessageParams{
+
+	parmas := &bot.SendMessageParams{
 		ChatID:      h.chatId,
 		Text:        h.getText(email),
 		ParseMode:   models.ParseModeHTML,
 		ReplyMarkup: h.getWebButton(),
-	})
+	}
+
+	return h.bot.SendMessage(ctx, parmas)
 }
 
 func (h *PmailTelegramPushHook) sendAttachments(id int, email *parsemail.Email) (msg *models.Message, err error) {
-	count := 0
-	for _, attachment := range email.Attachments {
-		count++
-		ctx, cancel := context.WithTimeout(context.Background(), h.timeout)
-		defer cancel()
-		msg, err = h.bot.SendDocument(ctx, &bot.SendDocumentParams{
-			ChatID:  h.chatId,
-			Caption: fmt.Sprintf("附件 %d", count),
-			Document: &models.InputFileUpload{
-				Filename: filepath.Base(attachment.Filename),
-				Data:     bytes.NewReader(attachment.Content),
-			},
-			ReplyParameters: &models.ReplyParameters{
-				MessageID: id,
-			},
-		})
-		if err != nil {
+	ctx, cancel := context.WithTimeout(context.Background(), h.timeout)
+	defer cancel()
+
+	params := &bot.SendDocumentParams{
+		ChatID: h.chatId,
+		ReplyParameters: &models.ReplyParameters{
+			MessageID: id,
+			Quote:     fmt.Sprintf("📎 附件：%d 个", len(email.Attachments)),
+		},
+	}
+
+	for i, attachment := range email.Attachments {
+		params.Caption = fmt.Sprintf("📎 附件 %d", i+1)
+		params.Document = &models.InputFileUpload{
+			Filename: filepath.Base(attachment.Filename),
+			Data:     bytes.NewReader(attachment.Content),
+		}
+
+		if msg, err = h.bot.SendDocument(ctx, params); err != nil {
 			err = errors.Join(err, fmt.Errorf("send document failed, err: %w", err))
 			continue
 		}
@@ -139,9 +143,25 @@ func (h *PmailTelegramPushHook) sendAttachments(id int, email *parsemail.Email) 
 	return
 }
 
-func (h *PmailTelegramPushHook) SendMessage() (msg *models.Message, err error) {
-	return h.bot.SendMessage(context.Background(), &bot.SendMessageParams{
+// TODO: 合并多个附件为一个消息发送
+func (h *PmailTelegramPushHook) sendAttachmentsCombine(id int, email *parsemail.Email) (msg []*models.Message, err error) {
+	ctx, cancel := context.WithTimeout(context.Background(), h.timeout)
+	defer cancel()
+
+	params := &bot.SendMediaGroupParams{
 		ChatID: h.chatId,
-		Text:   "测试消息",
-	})
+		ReplyParameters: &models.ReplyParameters{
+			MessageID: id,
+			Quote:     fmt.Sprintf("📎 附件：%d 个", len(email.Attachments)),
+		},
+	}
+
+	for i, attachment := range email.Attachments {
+		params.Media = append(params.Media, &models.InputMediaDocument{
+			Media:           filepath.Base(attachment.Filename),
+			Caption:         fmt.Sprintf("📎 附件 %d", i+1),
+			MediaAttachment: bytes.NewReader(attachment.Content),
+		})
+	}
+	return h.bot.SendMediaGroup(ctx, params)
 }
