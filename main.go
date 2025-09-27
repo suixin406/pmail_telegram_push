@@ -8,6 +8,8 @@ import (
 
 func main() {
 	config := config.ReadConfig()
-	hook := hook.NewPmailTelegramPushHook(config)
-	framework.CreatePlugin("telegram_push", hook).Run()
+	framework.CreatePlugin(
+		hook.PLUGIN_NAME,
+		hook.NewPmailTelegramPushHook(config),
+	).Run()
 }

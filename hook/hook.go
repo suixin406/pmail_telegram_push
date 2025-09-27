@@ -15,6 +15,10 @@ import (
 	_ "embed"
 )
 
+const (
+	PLUGIN_NAME = "pmail_telegram_push"
+)
+
 var (
 	//go:embed setting.html
 	SettingHtml string
@@ -34,7 +38,7 @@ type PmailTelegramPushHook struct {
 var _ framework.EmailHook = (*PmailTelegramPushHook)(nil)
 
 func (h *PmailTelegramPushHook) GetName(ctx *context.Context) string {
-	return "pmail_telegram_push"
+	return PLUGIN_NAME
 }
 
 func (h *PmailTelegramPushHook) ReceiveSaveAfter(ctx *context.Context, email *parsemail.Email, ue []*models.UserEmail) {
