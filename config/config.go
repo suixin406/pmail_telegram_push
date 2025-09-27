@@ -13,14 +13,15 @@ const (
 )
 
 type PluginConfig struct {
-	TelegramBotToken string `json:"telegram_bot_token"`
-	TelegramChatID   string `json:"telegram_chat_id"`
-	ShowContent      bool   `json:"show_content" default:"true"`
-	SpoilerContent   bool   `json:"spoiler_content" default:"true"`
-	SendAttachment   bool   `json:"send_attachment" default:"true"`
-	Debug            bool   `json:"debug" default:"false"`
-	Proxy            string `json:"proxy" default:""`
-	Timeout          int    `json:"timeout" default:"30"`
+	TelegramBotToken   string `json:"telegram_bot_token"`
+	TelegramChatID     string `json:"telegram_chat_id"`
+	ShowContent        bool   `json:"show_content" default:"true"`
+	SpoilerContent     bool   `json:"spoiler_content" default:"true"`
+	SendAttachment     bool   `json:"send_attachment" default:"true"`
+	Debug              bool   `json:"debug" default:"false"`
+	DisableLinkPreview bool   `json:"disable_link_preview" default:"true"`
+	Proxy              string `json:"proxy" default:""`
+	Timeout            int    `json:"timeout" default:"30"`
 }
 
 type Config struct {

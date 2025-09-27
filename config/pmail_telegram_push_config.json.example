@@ -6,5 +6,7 @@
     "send_attachment": true,
     "debug": false,
     "proxy": "",
-    "timeout": 30
+    "timeout": 30,
+    "disable_link_preview": true
+    
 }

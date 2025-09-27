@@ -1,18 +1,17 @@
 package hook
 
 import (
-	"time"
-
 	"github.com/ydzydzydz/pmail_telegram_push/config"
 
+	_ "embed"
+
+	pconfig "github.com/Jinnrry/pmail/config"
 	"github.com/Jinnrry/pmail/dto/parsemail"
 	"github.com/Jinnrry/pmail/hooks/framework"
 	"github.com/Jinnrry/pmail/models"
 	"github.com/Jinnrry/pmail/utils/context"
 	"github.com/go-telegram/bot"
 	log "github.com/sirupsen/logrus"
-
-	_ "embed"
 )
 
 const (
@@ -25,14 +24,9 @@ var (
 )
 
 type PmailTelegramPushHook struct {
-	chatId         string
-	bot            *bot.Bot
-	httpsEnabled   int
-	webDomain      string
-	showContent    bool
-	sendAttachment bool
-	spoilerContent bool
-	timeout        time.Duration
+	bot          *bot.Bot
+	mainConfig   *pconfig.Config
+	pluginConfig *config.PluginConfig
 }
 
 var _ framework.EmailHook = (*PmailTelegramPushHook)(nil)
@@ -50,7 +44,7 @@ func (h *PmailTelegramPushHook) ReceiveSaveAfter(ctx *context.Context, email *pa
 				continue
 			}
 
-			if h.sendAttachment && len(email.Attachments) > 0 {
+			if h.pluginConfig.SendAttachment && len(email.Attachments) > 0 {
 				if _, err = h.sendAttachments(msg.ID, email); err != nil {
 					log.Errorf("send attachments failed, err: %v", err)
 				} else {
@@ -86,13 +80,8 @@ func NewPmailTelegramPushHook(cfg *config.Config) *PmailTelegramPushHook {
 		panic(err)
 	}
 	return &PmailTelegramPushHook{
-		chatId:         cfg.PluginConfig.TelegramChatID,
-		bot:            bot,
-		httpsEnabled:   cfg.MainConfig.HttpsEnabled,
-		webDomain:      cfg.MainConfig.WebDomain,
-		showContent:    cfg.PluginConfig.ShowContent,
-		sendAttachment: cfg.PluginConfig.SendAttachment,
-		spoilerContent: cfg.PluginConfig.SpoilerContent,
-		timeout:        time.Duration(cfg.PluginConfig.Timeout) * time.Second,
+		bot:          bot,
+		mainConfig:   cfg.MainConfig,
+		pluginConfig: cfg.PluginConfig,
 	}
 }

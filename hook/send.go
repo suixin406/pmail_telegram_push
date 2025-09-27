@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"regexp"
+	"time"
 
 	"github.com/Jinnrry/pmail/dto/parsemail"
 	"github.com/go-telegram/bot"
@@ -18,10 +19,10 @@ const TEXT_MAX_SIZE = 4096
 
 func (h *PmailTelegramPushHook) getWebButton() *models.InlineKeyboardMarkup {
 	var url string
-	if h.httpsEnabled > 1 {
-		url = "http://" + h.webDomain
+	if h.mainConfig.HttpsEnabled > 1 {
+		url = "http://" + h.mainConfig.WebDomain
 	} else {
-		url = "https://" + h.webDomain
+		url = "https://" + h.mainConfig.WebDomain
 	}
 
 	return &models.InlineKeyboardMarkup{
@@ -70,7 +71,7 @@ func (h *PmailTelegramPushHook) getText(email *parsemail.Email) (text string) {
 		text += fmt.Sprintf("📎 附件：%d 个\n", len(email.Attachments))
 	}
 
-	if h.showContent {
+	if h.pluginConfig.ShowContent {
 		size := TEXT_MAX_SIZE - len(text) - 100
 		if size <= 0 {
 			log.Warnf("text size too large: %s", text)
@@ -91,7 +92,7 @@ func (h *PmailTelegramPushHook) getText(email *parsemail.Email) (text string) {
 				emailContent = removeHTMLTags(string(email.HTML))
 			}
 		}
-		if len(emailContent) > 0 && h.spoilerContent {
+		if len(emailContent) > 0 && h.pluginConfig.SpoilerContent {
 			emailContent = fmt.Sprintf("<tg-spoiler>%s</tg-spoiler>", emailContent)
 		}
 		if len(emailContent) > 0 {
@@ -103,25 +104,28 @@ func (h *PmailTelegramPushHook) getText(email *parsemail.Email) (text string) {
 }
 
 func (h *PmailTelegramPushHook) sendNotification(email *parsemail.Email) (msg *models.Message, err error) {
-	ctx, cancel := context.WithTimeout(context.Background(), h.timeout)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(h.pluginConfig.Timeout)*time.Second)
 	defer cancel()
 
 	parmas := &bot.SendMessageParams{
-		ChatID:      h.chatId,
+		ChatID:      h.pluginConfig.TelegramChatID,
 		Text:        h.getText(email),
 		ParseMode:   models.ParseModeHTML,
 		ReplyMarkup: h.getWebButton(),
+		LinkPreviewOptions: &models.LinkPreviewOptions{
+			IsDisabled: &h.pluginConfig.DisableLinkPreview,
+		},
 	}
 
 	return h.bot.SendMessage(ctx, parmas)
 }
 
 func (h *PmailTelegramPushHook) sendAttachments(id int, email *parsemail.Email) (msg *models.Message, err error) {
-	ctx, cancel := context.WithTimeout(context.Background(), h.timeout)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(h.pluginConfig.Timeout)*time.Second)
 	defer cancel()
 
 	params := &bot.SendDocumentParams{
-		ChatID: h.chatId,
+		ChatID: h.pluginConfig.TelegramChatID,
 		ReplyParameters: &models.ReplyParameters{
 			MessageID: id,
 			Quote:     fmt.Sprintf("📎 附件：%d 个", len(email.Attachments)),
@@ -144,24 +148,22 @@ func (h *PmailTelegramPushHook) sendAttachments(id int, email *parsemail.Email) 
 }
 
 // TODO: 合并多个附件为一个消息发送
-func (h *PmailTelegramPushHook) sendAttachmentsCombine(id int, email *parsemail.Email) (msg []*models.Message, err error) {
-	ctx, cancel := context.WithTimeout(context.Background(), h.timeout)
-	defer cancel()
-
-	params := &bot.SendMediaGroupParams{
-		ChatID: h.chatId,
-		ReplyParameters: &models.ReplyParameters{
-			MessageID: id,
-			Quote:     fmt.Sprintf("📎 附件：%d 个", len(email.Attachments)),
-		},
-	}
-
-	for i, attachment := range email.Attachments {
-		params.Media = append(params.Media, &models.InputMediaDocument{
-			Media:           filepath.Base(attachment.Filename),
-			Caption:         fmt.Sprintf("📎 附件 %d", i+1),
-			MediaAttachment: bytes.NewReader(attachment.Content),
-		})
-	}
-	return h.bot.SendMediaGroup(ctx, params)
-}
+// func (h *PmailTelegramPushHook) sendAttachmentsCombine(id int, email *parsemail.Email) (msg []*models.Message, err error) {
+// 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(h.pluginConfig.Timeout)*time.Second)
+// 	defer cancel()
+// 	params := &bot.SendMediaGroupParams{
+// 		ChatID: h.pluginConfig.TelegramChatID,
+// 		ReplyParameters: &models.ReplyParameters{
+// 			MessageID: id,
+// 			Quote:     fmt.Sprintf("📎 附件：%d 个", len(email.Attachments)),
+// 		},
+// 	}
+// 	for i, attachment := range email.Attachments {
+// 		params.Media = append(params.Media, &models.InputMediaDocument{
+// 			Media:           filepath.Base(attachment.Filename),
+// 			Caption:         fmt.Sprintf("📎 附件 %d", i+1),
+// 			MediaAttachment: bytes.NewReader(attachment.Content),
+// 		})
+// 	}
+// 	return h.bot.SendMediaGroup(ctx, params)
+// }

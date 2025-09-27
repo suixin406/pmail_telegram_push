@@ -158,6 +158,12 @@
                 <td>否</td>
                 <td>超时时间，单位为秒。默认为 <code>30</code>。</td>
             </tr>
+            <tr>
+                <td><code>disable_link_preview</code></td>
+                <td><code>boolean</code></td>
+                <td>否</td>
+                <td>是否禁用链接预览。默认为 <code>true</code>。</td>
+            </tr>
         </table>
 
         <h2>💡 使用</h2>
@@ -189,7 +195,8 @@
                 "send_attachment": true,
                 "debug": false,
                 "proxy": "",
-                "timeout": 30
+                "timeout": 30,
+                "disable_link_preview": true
             });
         </script>
         <script>
