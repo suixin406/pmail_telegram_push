@@ -44,6 +44,7 @@ jobs:
         env:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: 0
       - name: Publish Release
         uses: ncipollo/release-action@v1
         with:
