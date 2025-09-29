@@ -39,7 +39,7 @@ func (h *PmailTelegramPushHook) getWebButton() *models.InlineKeyboardMarkup {
 
 func removeHTMLTags(text string) string {
 	re := regexp.MustCompile("<.*?>")
-	return re.ReplaceAllString(text, "")
+	return re.ReplaceAllString(text, " ")
 }
 
 func (h *PmailTelegramPushHook) getText(email *parsemail.Email) (text string) {
