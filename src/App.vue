@@ -4,6 +4,18 @@
       <template #header>
         <div class="card-header">
           <span>Telegram 推送设置</span>
+          <div style="float: right">
+            <el-badge :value="saved ? 1 : ''" class="item">
+              <el-button
+                type="primary"
+                :disabled="!botInfo?.bot_link"
+                @click="contactBot"
+                style="float: right"
+              >
+                <i class="iconfont icon-telegram"> 联系机器人</i>
+              </el-button>
+            </el-badge>
+          </div>
         </div>
       </template>
 
@@ -15,8 +27,11 @@
         label-position="left"
         v-loading="loading"
       >
-        <el-form-item label="Chat ID" prop="chat_id">
-          <el-input v-model="formData.chat_id" placeholder="请输入 Telegram Chat ID" />
+        <el-form-item label="Telegram 聊天 ID" prop="chat_id">
+          <el-input
+            v-model="formData.chat_id"
+            placeholder="请输入 Telegram Chat ID，置空则禁用推送"
+          />
         </el-form-item>
 
         <el-form-item label="显示邮件内容">
@@ -34,21 +49,19 @@
         <el-form-item label="禁用链接预览">
           <el-switch v-model="formData.disable_link_preview" />
         </el-form-item>
-
-        <el-form-item>
-          <el-button type="primary" :disabled="!botInfo?.bot_link" @click="contactBot">
-            推送机器人
-          </el-button>
-          <el-button type="primary" @click="submitForm" :loading="loading"> 保存设置 </el-button>
-        </el-form-item>
       </el-form>
+      <el-form-item>
+        <el-button type="primary" @click="confirmSubmit" :loading="loading" style="margin: 0 auto">
+          <i class="iconfont icon-save-line"> 保存设置</i>
+        </el-button>
+      </el-form-item>
     </el-card>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import axios from 'axios'
 import './resize.js'
 
@@ -63,7 +76,14 @@ const formData = ref({
 })
 
 const rules = {
-  chat_id: [{ required: true, message: '请输入 Chat ID', trigger: 'blur', whitespace: true }],
+  chat_id: [
+    {
+      required: false,
+      message: '请输入 Chat ID， 置空则禁用推送',
+      trigger: 'blur',
+      whitespace: false,
+    },
+  ],
 }
 
 const botInfo = ref({
@@ -93,6 +113,8 @@ const fetchSettings = async () => {
   }
 }
 
+const saved = ref(false)
+
 // 提交表单
 const submitForm = async () => {
   try {
@@ -104,6 +126,9 @@ const submitForm = async () => {
     )
     if (response.data && response.data.code === 0) {
       ElMessage.success('设置保存成功')
+      if (formData.value.chat_id) {
+        saved.value = true
+      }
     } else {
       ElMessage.error(response.data.message || '保存设置失败')
     }
@@ -117,6 +142,17 @@ const submitForm = async () => {
   } finally {
     loading.value = false
   }
+}
+
+// 确认提交表单
+const confirmSubmit = () => {
+  ElMessageBox.confirm('确认保存设置吗？', '确认', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning',
+  }).then(() => {
+    submitForm()
+  })
 }
 
 const getBotInfo = async () => {
@@ -139,6 +175,7 @@ const getBotInfo = async () => {
 // 联系机器人
 const contactBot = () => {
   if (botInfo.value.bot_link) {
+    saved.value = false
     window.open(botInfo.value.bot_link, '_blank')
   } else {
     ElMessage.error('机器人链接不存在')

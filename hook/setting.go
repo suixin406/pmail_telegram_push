@@ -90,11 +90,11 @@ func (h *PmailTelegramPushHook) submitSetting(id int, requestData string) string
 	}
 	setting.UserID = id
 	setting.ChatID = strings.TrimSpace(setting.ChatID)
-	if err := model.CreateOrUpdateSetting(db.Instance, &setting); err != nil {
-		log.Errorf("create or update setting failed, err: %v", err)
+	if err := model.UpdateSetting(db.Instance, &setting); err != nil {
+		log.Errorf("update setting failed, err: %v", err)
 		response := Response{
 			Code:    -1,
-			Message: "create or update setting failed",
+			Message: "update setting failed",
 		}
 		return response.Json()
 	}

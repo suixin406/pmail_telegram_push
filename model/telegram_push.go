@@ -1,6 +1,8 @@
 package model
 
 import (
+	"errors"
+
 	"xorm.io/xorm"
 )
 
@@ -25,31 +27,35 @@ func GetSetting(db *xorm.Engine, userID int) (setting *TelegramPushSetting, err 
 		return nil, err
 	}
 	if !has {
-		setting = &TelegramPushSetting{
-			UserID:             userID,
-			ChatID:             "",
-			ShowContent:        true,
-			SpoilerContent:     true,
-			SendAttachments:    true,
-			DisableLinkPreview: true,
-		}
-		_, err = db.Insert(setting)
-		if err != nil {
+		if err = CreateDefaultSetting(db, userID); err != nil {
 			return nil, err
 		}
 	}
 	return setting, nil
 }
 
-func CreateOrUpdateSetting(db *xorm.Engine, setting *TelegramPushSetting) (err error) {
+func CreateDefaultSetting(db *xorm.Engine, userID int) (err error) {
+	setting := &TelegramPushSetting{
+		UserID:             userID,
+		ChatID:             "",
+		ShowContent:        true,
+		SpoilerContent:     true,
+		SendAttachments:    true,
+		DisableLinkPreview: true,
+	}
+	_, err = db.Insert(setting)
+	return err
+}
+
+func UpdateSetting(db *xorm.Engine, setting *TelegramPushSetting) (err error) {
 	has, err := db.Exist(&TelegramPushSetting{UserID: setting.UserID})
 	if err != nil {
 		return err
 	}
-	if has {
-		_, err = db.Where("user_id = ?", setting.UserID).AllCols().Update(setting)
-	} else {
-		_, err = db.Insert(setting)
+	if !has {
+		return errors.New("setting not found")
 	}
+
+	_, err = db.Where("user_id = ?", setting.UserID).AllCols().Update(setting)
 	return err
 }
