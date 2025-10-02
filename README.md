@@ -1,6 +1,8 @@
-# Pmail Telegram Push Plugin
+# Pmail Telegram 推送插件
 
 这是一个 [Pmail](https://github.com/Jinnrry/PMail) 插件，用于将新收到的邮件实时推送到您的 Telegram 机器人。
+
+![截图](./images/screenshot.png)
 
 ## ✨ 功能
 
