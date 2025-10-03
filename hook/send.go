@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"path/filepath"
-	"regexp"
 	"time"
 
 	"github.com/Jinnrry/pmail/dto/parsemail"
@@ -38,10 +37,10 @@ func (h *PmailTelegramPushHook) getWebButton() *models.InlineKeyboardMarkup {
 	}
 }
 
-func removeHTMLTags(text string) string {
-	re := regexp.MustCompile("<.*?>")
-	return re.ReplaceAllString(text, " ")
-}
+// func removeHTMLTags(text string) string {
+// 	re := regexp.MustCompile("<.*?>")
+// 	return re.ReplaceAllString(text, " ")
+// }
 
 func (h *PmailTelegramPushHook) getText(email *parsemail.Email, setting *model.TelegramPushSetting) (text string) {
 	text = "📧 有新邮件\n"
@@ -88,9 +87,9 @@ func (h *PmailTelegramPushHook) getText(email *parsemail.Email, setting *model.T
 			}
 		} else if len(email.HTML) > 0 {
 			if len(email.HTML) > size {
-				emailContent = fmt.Sprintf("%s...", removeHTMLTags(string(email.HTML))[:size])
+				emailContent = fmt.Sprintf("%s...", RemoveHTMLTag(string(email.HTML))[:size])
 			} else {
-				emailContent = removeHTMLTags(string(email.HTML))
+				emailContent = RemoveHTMLTag(string(email.HTML))
 			}
 		}
 		if len(emailContent) > 0 && setting.SpoilerContent {
