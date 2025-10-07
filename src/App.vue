@@ -20,7 +20,6 @@
       </template>
 
       <el-form
-        ref="formRef"
         :model="formData"
         :rules="rules"
         label-width="180px"
@@ -38,7 +37,7 @@
           <el-switch v-model="formData.show_content" />
         </el-form-item>
 
-        <el-form-item label="显示邮件内容时添加防剧透">
+        <el-form-item label="邮件内容防剧透">
           <el-switch v-model="formData.spoiler_content" />
         </el-form-item>
 
@@ -59,22 +58,56 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import axios from 'axios'
-import './resize.js'
+import resize from '@/utils/resize'
 
-const formRef = ref(null)
+import { getBotInfo } from '@/api/bot'
+import type { BotInfo } from '@/api/bot'
+
+import { getSettingInfo, saveSettingInfo } from '@/api/setting'
+import type { Setting } from '@/api/setting'
+const saved = ref(false)
 const loading = ref(false)
-const formData = ref({
+
+const botInfo = ref<BotInfo>({
+  username: '',
+  first_name: '',
+  bot_link: '',
+})
+
+const getBot = () => {
+  loading.value = true
+  getBotInfo()
+    .then((response) => {
+      botInfo.value = response.data
+    })
+    .catch((error) => {
+      ElMessage.error('获取机器人信息失败')
+      console.error(error)
+    })
+    .finally(() => {
+      loading.value = false
+    })
+}
+
+const contactBot = () => {
+  if (!botInfo.value.bot_link) {
+    ElMessage.error('机器人链接为空')
+    return
+  }
+  saved.value = false
+  window.open(botInfo.value.bot_link, '_blank')
+}
+
+const formData = ref<Setting>({
   chat_id: '',
   show_content: true,
   spoiler_content: true,
   send_attachments: true,
   disable_link_preview: true,
 })
-
 const rules = {
   chat_id: [
     {
@@ -85,106 +118,51 @@ const rules = {
     },
   ],
 }
-
-const botInfo = ref({
-  username: '',
-  first_name: '',
-  bot_link: '',
-})
-
-// 获取设置数据
-const fetchSettings = async () => {
-  try {
-    loading.value = true
-    const response = await axios.get('/api/plugin/settings/pmail_telegram_push/setting')
-    if (response.data && response.data.code === 0) {
-      formData.value = {
-        ...formData.value,
-        ...response.data.data,
-      }
-    } else {
-      ElMessage.error(response.data.message || '获取设置失败')
-    }
-  } catch (error) {
-    console.error('Failed to fetch settings:', error)
-    ElMessage.error('获取设置失败')
-  } finally {
-    loading.value = false
-  }
+const getSetting = () => {
+  loading.value = true
+  getSettingInfo()
+    .then((response) => {
+      formData.value = response.data
+    })
+    .catch((error) => {
+      ElMessage.error('获取设置信息失败')
+      console.error(error)
+    })
+    .finally(() => {
+      loading.value = false
+    })
 }
 
-const saved = ref(false)
-
-// 提交表单
-const submitForm = async () => {
-  try {
-    await formRef.value.validate()
-    loading.value = true
-    const response = await axios.post(
-      '/api/plugin/settings/pmail_telegram_push/submit',
-      formData.value,
-    )
-    if (response.data && response.data.code === 0) {
-      ElMessage.success('设置保存成功')
-      if (formData.value.chat_id) {
-        saved.value = true
-      }
-    } else {
-      ElMessage.error(response.data.message || '保存设置失败')
-    }
-  } catch (error) {
-    console.error('Failed to save settings:', error)
-    if (error.response && error.response.data.message) {
-      ElMessage.error(error.response.data.message)
-    } else {
+const saveSetting = () => {
+  loading.value = true
+  saveSettingInfo(formData.value)
+    .then(() => {
+      saved.value = true
+      ElMessage.success('设置已保存')
+    })
+    .catch((error) => {
       ElMessage.error('保存设置失败')
-    }
-  } finally {
-    loading.value = false
-  }
+      console.error(error)
+    })
+    .finally(() => {
+      loading.value = false
+    })
 }
 
-// 确认提交表单
 const confirmSubmit = () => {
-  ElMessageBox.confirm('确认保存设置吗？', '确认', {
+  ElMessageBox.confirm('确认保存设置吗？', '保存设置', {
     confirmButtonText: '确定',
     cancelButtonText: '取消',
     type: 'warning',
   }).then(() => {
-    submitForm()
+    saveSetting()
   })
 }
 
-const getBotInfo = async () => {
-  try {
-    const response = await axios.get('/api/plugin/settings/pmail_telegram_push/bot')
-    if (response.data && response.data.code === 0) {
-      botInfo.value = {
-        ...botInfo.value,
-        ...response.data.data,
-      }
-    } else {
-      ElMessage.error(response.data.message || '获取机器人信息失败')
-    }
-  } catch (error) {
-    console.error('Failed to get bot:', error)
-    ElMessage.error('获取机器人信息失败')
-  }
-}
-
-// 联系机器人
-const contactBot = () => {
-  if (botInfo.value.bot_link) {
-    saved.value = false
-    window.open(botInfo.value.bot_link, '_blank')
-  } else {
-    ElMessage.error('机器人链接不存在')
-  }
-}
-
 onMounted(() => {
-  fetchSettings()
-  getBotInfo()
+  resize()
+  getBot()
+  getSetting()
 })
 </script>
 
