@@ -1,4 +1,4 @@
-import { get, post, ApiPrefix } from '@/api/api'
+import { get, post } from '@/api/api'
 import type { ApiResponse } from '@/utils/requests'
 
 export interface Setting {
@@ -10,9 +10,9 @@ export interface Setting {
 }
 
 export function getSettingInfo(): Promise<ApiResponse<Setting>> {
-  return get(ApiPrefix + 'settings')
+  return get('settings')
 }
 
 export function saveSettingInfo(setting: Setting): Promise<ApiResponse<void>> {
-  return post(ApiPrefix + 'submit', setting)
+  return post('submit', setting)
 }

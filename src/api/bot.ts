@@ -1,4 +1,4 @@
-import { get, ApiPrefix } from '@/api/api'
+import { get } from '@/api/api'
 
 export interface BotInfo {
   username: string
@@ -7,5 +7,5 @@ export interface BotInfo {
 }
 
 export const getBotInfo = () => {
-  return get<BotInfo>(ApiPrefix + 'bot')
+  return get<BotInfo>('bot')
 }

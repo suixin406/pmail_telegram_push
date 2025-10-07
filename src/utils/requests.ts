@@ -8,6 +8,7 @@ export interface ApiResponse<T> {
 }
 
 const service: AxiosInstance = axios.create({
+  baseURL: '/api/plugin/settings/pmail_telegram_push/',
   timeout: 5000,
   headers: {
     'Content-Type': 'application/json;charset=utf-8',
