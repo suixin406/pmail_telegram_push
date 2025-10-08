@@ -1,12 +1,6 @@
 import axios from 'axios'
 import type { AxiosResponse, AxiosInstance } from 'axios'
 
-export interface ApiResponse<T> {
-  code: number
-  message: string
-  data: T
-}
-
 const service: AxiosInstance = axios.create({
   baseURL: '/api/plugin/settings/pmail_telegram_push/',
   timeout: 5000,
@@ -14,6 +8,15 @@ const service: AxiosInstance = axios.create({
     'Content-Type': 'application/json;charset=utf-8',
   },
 })
+
+service.interceptors.request.use(
+  (config) => {
+    return config
+  },
+  (error) => {
+    return Promise.reject(error)
+  },
+)
 
 service.interceptors.response.use(
   (response: AxiosResponse) => {

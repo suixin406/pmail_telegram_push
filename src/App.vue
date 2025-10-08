@@ -63,11 +63,10 @@ import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import resize from '@/utils/resize'
 
+import type { BotInfo, Setting } from '@/types'
 import { getBotInfo } from '@/api/bot'
-import type { BotInfo } from '@/api/bot'
-
 import { getSettingInfo, saveSettingInfo } from '@/api/setting'
-import type { Setting } from '@/api/setting'
+
 const saved = ref(false)
 const loading = ref(false)
 

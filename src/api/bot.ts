@@ -1,10 +1,5 @@
-import { get } from '@/api/api'
-
-export interface BotInfo {
-  username: string
-  first_name: string
-  bot_link: string
-}
+import { get } from '@/api'
+import type { BotInfo } from '@/types'
 
 export const getBotInfo = () => {
   return get<BotInfo>('bot')
