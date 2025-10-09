@@ -69,7 +69,6 @@ import { getSettingInfo, saveSettingInfo } from '@/api/setting'
 
 const saved = ref(false)
 const loading = ref(false)
-
 const botInfo = ref<BotInfo>({
   username: '',
   first_name: '',
@@ -80,7 +79,9 @@ const getBot = () => {
   loading.value = true
   getBotInfo()
     .then((response) => {
-      botInfo.value = response.data
+      if (response.data) {
+        botInfo.value = response.data
+      }
     })
     .catch((error) => {
       ElMessage.error('获取机器人信息失败')
@@ -92,7 +93,7 @@ const getBot = () => {
 }
 
 const contactBot = () => {
-  if (!botInfo.value.bot_link) {
+  if (!botInfo.value?.bot_link) {
     ElMessage.error('机器人链接为空')
     return
   }
@@ -121,7 +122,9 @@ const getSetting = () => {
   loading.value = true
   getSettingInfo()
     .then((response) => {
-      formData.value = response.data
+      if (response.data) {
+        formData.value = response.data
+      }
     })
     .catch((error) => {
       ElMessage.error('获取设置信息失败')
@@ -134,7 +137,7 @@ const getSetting = () => {
 
 const saveSetting = () => {
   loading.value = true
-  saveSettingInfo(formData.value)
+  saveSettingInfo(formData.value || {})
     .then(() => {
       saved.value = true
       ElMessage.success('设置已保存')
