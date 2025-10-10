@@ -5,6 +5,7 @@ import (
 	"os"
 
 	pconfig "github.com/Jinnrry/pmail/config"
+	"github.com/ydzydzydz/pmail_telegram_push/logger"
 )
 
 const (
@@ -27,27 +28,29 @@ type Config struct {
 func readMainConfig() *pconfig.Config {
 	content, err := os.ReadFile(MAIN_CONFIG_FILE)
 	if err != nil {
-		panic(err)
+		logger.PluginLogger.Panic().Err(err).Msg("主配置文件读取失败")
 	}
 	var mainConfig pconfig.Config
 	if err := json.Unmarshal(content, &mainConfig); err != nil {
-		panic(err)
+		logger.PluginLogger.Panic().Err(err).Msg("主配置文件解析失败")
 	}
+	logger.PluginLogger.Info().Msg("主配置文件读取成功")
 	return &mainConfig
 }
 
 func readPluginConfig() *PluginConfig {
 	content, err := os.ReadFile(PLUGIN_CONFIG_FILE)
 	if err != nil {
-		panic(err)
+		logger.PluginLogger.Panic().Err(err).Msg("插件配置文件读取失败")
 	}
 	var pluginConfig PluginConfig
 	if err := json.Unmarshal(content, &pluginConfig); err != nil {
-		panic(err)
+		logger.PluginLogger.Panic().Err(err).Msg("插件配置文件解析失败")
 	}
 	if pluginConfig.TelegramBotToken == "" {
-		panic("telegram bot token is empty")
+		logger.PluginLogger.Panic().Msg("telegram bot token is empty")
 	}
+	logger.PluginLogger.Info().Msg("插件配置文件读取成功")
 	return &pluginConfig
 }
 

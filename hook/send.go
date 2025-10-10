@@ -11,7 +11,7 @@ import (
 	"github.com/Jinnrry/pmail/dto/parsemail"
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
-	log "github.com/sirupsen/logrus"
+	"github.com/ydzydzydz/pmail_telegram_push/logger"
 	"github.com/ydzydzydz/pmail_telegram_push/model"
 )
 
@@ -74,7 +74,7 @@ func (h *PmailTelegramPushHook) getText(email *parsemail.Email, setting *model.T
 	if setting.ShowContent {
 		size := TEXT_MAX_SIZE - len(text) - 100
 		if size <= 0 {
-			log.Warnf("text size too large: %s", text)
+			logger.PluginLogger.Warn().Int("text_size", size).Msg("text size too large")
 			return
 		}
 

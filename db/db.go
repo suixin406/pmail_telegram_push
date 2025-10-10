@@ -7,7 +7,7 @@ import (
 	"github.com/Jinnrry/pmail/utils/errors"
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
-	log "github.com/sirupsen/logrus"
+	"github.com/ydzydzydz/pmail_telegram_push/logger"
 	"github.com/ydzydzydz/pmail_telegram_push/model"
 	_ "modernc.org/sqlite"
 	"xorm.io/xorm"
@@ -36,9 +36,10 @@ func Init(config *config.Config) error {
 		return errors.New("Database Type Error!")
 	}
 	if err != nil {
-		log.Errorf("DB init Error! %s", err.Error())
+		logger.PluginLogger.Error().Err(err).Msg("数据库初始化失败")
 		return errors.Wrap(err)
 	}
+	logger.PluginLogger.Info().Msg("数据库初始化成功")
 
 	Instance.SetConnMaxLifetime(30 * time.Minute)
 	Instance.ShowSQL(false)

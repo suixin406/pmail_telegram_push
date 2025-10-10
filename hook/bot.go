@@ -10,12 +10,16 @@ import (
 
 	"github.com/go-telegram/bot"
 	"github.com/ydzydzydz/pmail_telegram_push/config"
+	"github.com/ydzydzydz/pmail_telegram_push/logger"
 	"golang.org/x/net/proxy"
 )
 
 func NewBot(config *config.Config) (*bot.Bot, error) {
 	opts := []bot.Option{
 		bot.WithCheckInitTimeout(time.Duration(config.PluginConfig.Timeout) * time.Second),
+		bot.WithDebugHandler(func(format string, args ...any) {
+			logger.BotLogger.Debug().Msgf(format, args...)
+		}),
 	}
 	if config.PluginConfig.Debug {
 		opts = append(opts, bot.WithDebug())
@@ -26,7 +30,7 @@ func NewBot(config *config.Config) (*bot.Bot, error) {
 	}
 	parsedURL, err := url.Parse(config.PluginConfig.Proxy)
 	if err != nil {
-		panic(err)
+		logger.PluginLogger.Panic().Err(err).Msg("代理URL解析失败")
 	}
 	switch strings.ToLower(parsedURL.Scheme) {
 	case "socks5":

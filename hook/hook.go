@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/ydzydzydz/pmail_telegram_push/config"
+	"github.com/ydzydzydz/pmail_telegram_push/logger"
 	"github.com/ydzydzydz/pmail_telegram_push/model"
 
 	pconfig "github.com/Jinnrry/pmail/config"
@@ -12,7 +13,7 @@ import (
 	"github.com/Jinnrry/pmail/models"
 	"github.com/Jinnrry/pmail/utils/context"
 	"github.com/go-telegram/bot"
-	log "github.com/sirupsen/logrus"
+
 	"github.com/ydzydzydz/pmail_telegram_push/db"
 )
 
@@ -42,15 +43,16 @@ func (h *PmailTelegramPushHook) ReceiveSaveAfter(ctx *context.Context, email *pa
 
 			msg, err := h.sendNotification(email, setting)
 			if err != nil {
-				log.Errorf("send notification failed, err: %v", err)
+				logger.PluginLogger.Error().Err(err).Msg("发送通知失败")
 				continue
 			}
+			logger.PluginLogger.Info().Int("message_id", msg.ID).Msg("发送通知成功")
 
 			if setting.SendAttachments && len(email.Attachments) > 0 {
 				if _, err = h.sendAttachments(msg.ID, email, setting); err != nil {
-					log.Errorf("send attachments failed, err: %v", err)
+					logger.PluginLogger.Error().Err(err).Msg("发送附件失败")
 				} else {
-					log.Infof("send attachments success, message id: %d", msg.ID)
+					logger.PluginLogger.Info().Int("message_id", msg.ID).Msg("发送附件成功")
 				}
 			}
 		}

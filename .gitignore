@@ -1,5 +1,5 @@
 config/*.json
-pmail_telegram_push
+pmail_telegram_push*
 *.db
 
 # Logs

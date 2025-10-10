@@ -8,8 +8,8 @@ import (
 
 	_ "embed"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/ydzydzydz/pmail_telegram_push/db"
+	"github.com/ydzydzydz/pmail_telegram_push/logger"
 	"github.com/ydzydzydz/pmail_telegram_push/model"
 )
 
@@ -27,7 +27,7 @@ type Response struct {
 func (r *Response) Json() string {
 	json, err := json.Marshal(r)
 	if err != nil {
-		log.Errorf("marshal response failed, err: %v", err)
+		logger.PluginLogger.Error().Err(err).Msg("marshal response failed")
 		return ""
 	}
 	return string(json)
@@ -40,6 +40,7 @@ type TelegramPushBotInfo struct {
 }
 
 func (h *PmailTelegramPushHook) getSetting(id int) string {
+	logger.PluginLogger.Info().Int("user_id", id).Msg("获取Telegram Push设置")
 	result, err := model.GetSetting(db.Instance, id)
 	if err != nil {
 		response := Response{
@@ -57,6 +58,7 @@ func (h *PmailTelegramPushHook) getSetting(id int) string {
 }
 
 func (h *PmailTelegramPushHook) getBotInfo() string {
+	logger.PluginLogger.Info().Msg("获取Telegram Bot信息")
 	me, err := h.bot.GetMe(context.Background())
 	if err != nil {
 		response := Response{
@@ -74,14 +76,14 @@ func (h *PmailTelegramPushHook) getBotInfo() string {
 			BotLink:   fmt.Sprintf("https://t.me/%s", me.Username),
 		},
 	}
-	fmt.Println(response.Json())
 	return response.Json()
 }
 
 func (h *PmailTelegramPushHook) submitSetting(id int, requestData string) string {
+	logger.PluginLogger.Info().Int("user_id", id).Msg("更新Telegram Push设置")
 	var setting model.TelegramPushSetting
 	if err := json.Unmarshal([]byte(requestData), &setting); err != nil {
-		log.Errorf("unmarshal setting request failed, err: %v", err)
+		logger.PluginLogger.Error().Err(err).Msg("unmarshal setting request failed")
 		response := Response{
 			Code:    -1,
 			Message: "unmarshal setting request failed",
@@ -91,7 +93,7 @@ func (h *PmailTelegramPushHook) submitSetting(id int, requestData string) string
 	setting.UserID = id
 	setting.ChatID = strings.TrimSpace(setting.ChatID)
 	if err := model.UpdateSetting(db.Instance, &setting); err != nil {
-		log.Errorf("update setting failed, err: %v", err)
+		logger.PluginLogger.Error().Err(err).Msg("update setting failed")
 		response := Response{
 			Code:    -1,
 			Message: "update setting failed",
