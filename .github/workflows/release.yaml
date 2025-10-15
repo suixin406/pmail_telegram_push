@@ -1,10 +1,11 @@
+# .github/workflows/release.yaml
 name: Release Binary
-
+​
 on:
   push:
     tags:
       - 'v*'
-
+​
 jobs:
   build:
     strategy:
@@ -44,7 +45,7 @@ jobs:
         env:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
-          CGO_ENABLED: 0
+          CGO_ENABLED: 0  # 这里有坑，不关闭 CGO 是动态链接的...
       - name: Publish Release
         uses: ncipollo/release-action@v1
         with:
